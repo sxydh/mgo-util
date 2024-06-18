@@ -102,7 +102,7 @@ func tunnelSSHDial(tunnel *Tunnel) error {
 //goland:noinspection GoUnhandledErrorResult
 func tunnelAccept(tunnel *Tunnel) {
 	sshClient := tunnel.sshClient
-	listener, err := net.Listen("tcp", ":"+strconv.Itoa(tunnel.ListenPort))
+	listener, err := net.Listen("tcp", "localhost:"+strconv.Itoa(tunnel.ListenPort))
 	if err != nil {
 		_ = sshClient.Close()
 		log.Printf("Listen tcp to local host error: config=%v, err=%v", json_utils.ToJsonStr(tunnel), err)
@@ -134,7 +134,7 @@ func tunnelAccept(tunnel *Tunnel) {
 //goland:noinspection GoUnhandledErrorResult
 func reverseTunnelAccept(tunnel *Tunnel) {
 	sshClient := tunnel.sshClient
-	listener, err := sshClient.Listen("tcp", ":"+strconv.Itoa(tunnel.ListenPort))
+	listener, err := sshClient.Listen("tcp", "localhost:"+strconv.Itoa(tunnel.ListenPort))
 	if err != nil {
 		_ = sshClient.Close()
 		log.Printf("Listen tcp to ssh host error: config=%v, err=%v", json_utils.ToJsonStr(tunnel), err)
