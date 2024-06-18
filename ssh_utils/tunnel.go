@@ -112,12 +112,12 @@ func acceptTunnel(tunnel *Tunnel) {
 			log.Printf("Accept user connection error: config=%v, err=%v", json_utils.ToJsonStr(tunnel), err)
 			return
 		}
-		go copyConnection(tunnel, &conn)
+		go relayConnection(tunnel, &conn)
 	}
 }
 
 //goland:noinspection GoUnhandledErrorResult
-func copyConnection(tunnel *Tunnel, conn *net.Conn) {
+func relayConnection(tunnel *Tunnel, conn *net.Conn) {
 	targetConn, err := net.Dial("tcp", tunnel.TargetIp+":"+strconv.Itoa(tunnel.TargetPort))
 	if err != nil {
 		log.Printf("Dial tcp to target host error: config=%v, err=%v", json_utils.ToJsonStr(tunnel), err)
