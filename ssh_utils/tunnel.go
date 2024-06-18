@@ -189,7 +189,7 @@ func tunnelConnectionRelay(tunnel *Tunnel, targetConn *net.Conn, conn *net.Conn)
 	wg.Wait()
 }
 
-func tunnelKeepalive(todoTunnels *chan *Tunnel, doingTunnels *chan *Tunnel) {
+func tunnelKeepalive(doingTunnels *chan *Tunnel, todoTunnels *chan *Tunnel) {
 	for {
 		checkTunnel := <-*doingTunnels
 		go func() {
