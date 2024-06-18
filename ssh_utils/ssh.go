@@ -13,22 +13,22 @@ import (
 	"time"
 )
 
-type SSHTunnel struct {
+type Tunnel struct {
 	Id         string `json:"id"`
-	sshClient  *ssh.Client
-	listener   *net.Listener
 	SSHIp      string `json:"sshIp"`
 	SSHPort    int    `json:"sshPort"`
 	SSHUser    string `json:"sshUser"`
-	ListenPort int    `json:"listenPort"`
+	sshClient  *ssh.Client
+	ListenPort int `json:"listenPort"`
+	listener   *net.Listener
 	TargetIp   string `json:"targetIp"`
 	TargetPort int    `json:"targetPort"`
 	Status     int    `json:"status"`
 }
 
-func BuildSSHTunnel(tunnels *[]*SSHTunnel) {
-	var todoTunnels = make(chan *SSHTunnel, 20)
-	var doingTunnels = make(chan *SSHTunnel, 20)
+func ReverseTunnel(tunnels *[]*Tunnel) {
+	var todoTunnels = make(chan *Tunnel, 20)
+	var doingTunnels = make(chan *Tunnel, 20)
 	for _, tunnel := range *tunnels {
 		todoTunnels <- tunnel
 	}
@@ -36,7 +36,7 @@ func BuildSSHTunnel(tunnels *[]*SSHTunnel) {
 	go func() {
 		for {
 			todoTunnel := <-todoTunnels
-			err := dialSSHTunnel(todoTunnel)
+			err := dialTunnel(todoTunnel)
 			if err != nil {
 				todoTunnels <- todoTunnel
 				time.Sleep(2 * time.Second)
@@ -44,19 +44,19 @@ func BuildSSHTunnel(tunnels *[]*SSHTunnel) {
 			}
 			todoTunnel.Status = 1
 			doingTunnels <- todoTunnel
-			go acceptSSHTunnel(todoTunnel)
+			go acceptTunnel(todoTunnel)
 			time.Sleep(5 * time.Second)
 		}
 	}()
 	go func() {
-		keepaliveSSHTunnel(&doingTunnels, &todoTunnels)
+		keepaliveTunnel(&doingTunnels, &todoTunnels)
 	}()
 
 	var done = make(chan bool)
 	<-done
 }
 
-func dialSSHTunnel(tunnel *SSHTunnel) error {
+func dialTunnel(tunnel *Tunnel) error {
 	userHomeDir, _ := os.UserHomeDir()
 	privateKeyPath := filepath.Join(userHomeDir, ".ssh", "id_rsa")
 	privateKeyBytes, err := os.ReadFile(privateKeyPath)
@@ -86,10 +86,10 @@ func dialSSHTunnel(tunnel *SSHTunnel) error {
 	listener, err := sshClient.Listen("tcp", ":"+strconv.Itoa(tunnel.ListenPort))
 	if err != nil {
 		_ = sshClient.Close()
-		log.Printf("Listen tcp to ssh host error: config=%v, err=%v", json_utils.ToJsonStr(tunnel), err)
+		log.Printf("Listen tcp error: config=%v, err=%v", json_utils.ToJsonStr(tunnel), err)
 		return err
 	}
-	log.Printf("Listening tcp to ssh host: %v", json_utils.ToJsonStr(tunnel))
+	log.Printf("Listening tcp: %v", json_utils.ToJsonStr(tunnel))
 
 	tunnel.sshClient = sshClient
 	tunnel.listener = &listener
@@ -97,7 +97,7 @@ func dialSSHTunnel(tunnel *SSHTunnel) error {
 }
 
 //goland:noinspection GoUnhandledErrorResult
-func acceptSSHTunnel(tunnel *SSHTunnel) {
+func acceptTunnel(tunnel *Tunnel) {
 	listener := *tunnel.listener
 	sshClient := tunnel.sshClient
 	defer listener.Close()
@@ -112,12 +112,12 @@ func acceptSSHTunnel(tunnel *SSHTunnel) {
 			log.Printf("Accept user connection error: config=%v, err=%v", json_utils.ToJsonStr(tunnel), err)
 			return
 		}
-		go copySSHTunnelData(tunnel, &conn)
+		go copyConnection(tunnel, &conn)
 	}
 }
 
 //goland:noinspection GoUnhandledErrorResult
-func copySSHTunnelData(tunnel *SSHTunnel, conn *net.Conn) {
+func copyConnection(tunnel *Tunnel, conn *net.Conn) {
 	targetConn, err := net.Dial("tcp", tunnel.TargetIp+":"+strconv.Itoa(tunnel.TargetPort))
 	if err != nil {
 		log.Printf("Dial tcp to target host error: config=%v, err=%v", json_utils.ToJsonStr(tunnel), err)
@@ -147,7 +147,7 @@ func copySSHTunnelData(tunnel *SSHTunnel, conn *net.Conn) {
 	wg.Wait()
 }
 
-func keepaliveSSHTunnel(todoTunnels *chan *SSHTunnel, doingTunnels *chan *SSHTunnel) {
+func keepaliveTunnel(todoTunnels *chan *Tunnel, doingTunnels *chan *Tunnel) {
 	for {
 		checkTunnel := <-*doingTunnels
 		go func() {
