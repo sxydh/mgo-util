@@ -9,8 +9,8 @@ import (
 )
 
 type TcpServer struct {
-	onConn    func(conn *net.Conn)
-	onMessage func(msg string)
+	OnConn    func(conn *net.Conn)
+	OnMessage func(msg string)
 }
 
 func (server *TcpServer) TcpServerOnRand() int {
@@ -28,20 +28,20 @@ func (server *TcpServer) TcpServerOnRand() int {
 func (server *TcpServer) TcpServerOnPort(port int) error {
 	listener, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
-		log.Printf("Listen on port error, port=%v, err=%v", port, err)
+		log.Printf("Listen on port for tcp error: port=%v, err=%v", port, err)
 		return err
 	}
 	defer listener.Close()
-	log.Printf("Listening for tcp..., port=%v", port)
+	log.Printf("Listening for tcp: port=%v", port)
 
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			log.Printf("Accept on port error, port=%v, err=%v", port, err)
+			log.Printf("Accept connection error: port=%v, err=%v", port, err)
 			return err
 		}
-		server.onConn(&conn)
-		log.Printf("Accepting..., localAddr=%v， remoteAddr=%v", conn.LocalAddr(), conn.RemoteAddr())
+		server.OnConn(&conn)
+		log.Printf("Accepting connection: localAddr=%v， remoteAddr=%v", conn.LocalAddr(), conn.RemoteAddr())
 
 		go func() {
 			defer conn.Close()
@@ -51,7 +51,7 @@ func (server *TcpServer) TcpServerOnPort(port int) error {
 				log.Printf("Read error, localAddr=%v， remoteAddr=%v", conn.LocalAddr(), conn.RemoteAddr())
 				return
 			}
-			server.onMessage(string(bytes))
+			server.OnMessage(string(bytes))
 		}()
 	}
 }
