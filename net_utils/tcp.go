@@ -1,6 +1,9 @@
 package net_utils
 
 import (
+	"bufio"
+	"encoding/binary"
+	"io"
 	"log"
 	"math/rand"
 	"net"
@@ -45,11 +48,18 @@ func (server *TcpServer) TcpServerOnPort(port int) error {
 
 		go func() {
 			defer conn.Close()
+			reader := bufio.NewReader(conn)
 			for {
-				bytes := make([]byte, 1024)
-				_, err = conn.Read(bytes)
+				bytes := make([]byte, 4)
+				_, err = io.ReadFull(reader, bytes)
 				if err != nil {
-					log.Printf("Read error, localAddr=%v， remoteAddr=%v", conn.LocalAddr(), conn.RemoteAddr())
+					log.Printf("Read body length error, localAddr=%v， remoteAddr=%v", conn.LocalAddr(), conn.RemoteAddr())
+					return
+				}
+				bytes = make([]byte, binary.BigEndian.Uint64(bytes))
+				_, err = io.ReadFull(reader, bytes)
+				if err != nil {
+					log.Printf("Read body error, localAddr=%v， remoteAddr=%v", conn.LocalAddr(), conn.RemoteAddr())
 					return
 				}
 				server.OnMessage(string(bytes))
