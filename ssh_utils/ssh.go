@@ -1,4 +1,4 @@
-package net_utils
+package ssh_utils
 
 import (
 	"github.com/sxydh/mgo-util/json_utils"
