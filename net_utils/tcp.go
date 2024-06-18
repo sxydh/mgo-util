@@ -16,11 +16,11 @@ type TcpServer struct {
 	OnMessage func(msg string)
 }
 
-func (server *TcpServer) TcpServerOnRand() int {
+func (server *TcpServer) RandPort() int {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for {
 		port := 40000 + r.Intn(10000)
-		err := server.TcpServerOnPort(port)
+		err := server.Port(port)
 		if err == nil {
 			return port
 		}
@@ -28,7 +28,7 @@ func (server *TcpServer) TcpServerOnRand() int {
 }
 
 //goland:noinspection GoUnhandledErrorResult
-func (server *TcpServer) TcpServerOnPort(port int) error {
+func (server *TcpServer) Port(port int) error {
 	listener, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
 		log.Printf("Listen on port for tcp error: port=%v, err=%v", port, err)

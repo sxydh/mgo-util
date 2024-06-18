@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestTcpServer_TcpServerOnRand(t *testing.T) {
+func TestTcpServer_RandPort(t *testing.T) {
 	type fields struct {
 		OnConn    func(conn *net.Conn)
 		OnMessage func(msg string)
@@ -33,12 +33,12 @@ func TestTcpServer_TcpServerOnRand(t *testing.T) {
 				OnConn:    tt.fields.OnConn,
 				OnMessage: tt.fields.OnMessage,
 			}
-			server.TcpServerOnRand()
+			server.RandPort()
 		})
 	}
 }
 
-func TestTcpServer_TcpServerOnPort(t *testing.T) {
+func TestTcpServer_Port(t *testing.T) {
 	type fields struct {
 		OnConn    func(conn *net.Conn)
 		OnMessage func(msg string)
@@ -74,8 +74,8 @@ func TestTcpServer_TcpServerOnPort(t *testing.T) {
 				OnConn:    tt.fields.OnConn,
 				OnMessage: tt.fields.OnMessage,
 			}
-			if err := server.TcpServerOnPort(tt.args.port); (err != nil) != tt.wantErr {
-				t.Errorf("TcpServerOnPort() error = %v, wantErr %v", err, tt.wantErr)
+			if err := server.Port(tt.args.port); (err != nil) != tt.wantErr {
+				t.Errorf("Port() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
