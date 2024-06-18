@@ -67,3 +67,21 @@ func (server *TcpServer) Port(port int) error {
 		}()
 	}
 }
+
+//goland:noinspection GoUnhandledErrorResult
+func (server *TcpServer) Send(conn *net.Conn, msg string) error {
+	// 解决粘包问题
+	bytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(bytes, uint32(len(msg)))
+	_, err := (*conn).Write(bytes)
+	if err != nil {
+		log.Printf("Write body length error: err=%v", err)
+		return err
+	}
+	_, err = (*conn).Write([]byte(msg))
+	if err != nil {
+		log.Printf("Write body error: err=%v", err)
+		return err
+	}
+	return nil
+}
