@@ -26,7 +26,15 @@ type Tunnel struct {
 	Status     int    `json:"status"`
 }
 
-func ReverseTunnel(tunnels *[]*Tunnel) {
+func NewTunnel(tunnels *[]*Tunnel) {
+	tunnelBuild(tunnels, 1)
+}
+
+func NewReverseTunnel(tunnels *[]*Tunnel) {
+	tunnelBuild(tunnels, -1)
+}
+
+func tunnelBuild(tunnels *[]*Tunnel, direction int) {
 	var todoTunnels = make(chan *Tunnel, 20)
 	var doingTunnels = make(chan *Tunnel, 20)
 	for _, tunnel := range *tunnels {
@@ -36,7 +44,7 @@ func ReverseTunnel(tunnels *[]*Tunnel) {
 	go func() {
 		for {
 			todoTunnel := <-todoTunnels
-			err := dialTunnel(todoTunnel)
+			err := tunnelSSHDial(todoTunnel)
 			if err != nil {
 				todoTunnels <- todoTunnel
 				time.Sleep(2 * time.Second)
@@ -44,19 +52,23 @@ func ReverseTunnel(tunnels *[]*Tunnel) {
 			}
 			todoTunnel.Status = 1
 			doingTunnels <- todoTunnel
-			go acceptTunnel(todoTunnel)
+			if direction != -1 {
+				go tunnelAccept(todoTunnel)
+			} else {
+				go reverseTunnelAccept(todoTunnel)
+			}
 			time.Sleep(5 * time.Second)
 		}
 	}()
 	go func() {
-		keepaliveTunnel(&doingTunnels, &todoTunnels)
+		tunnelKeepalive(&doingTunnels, &todoTunnels)
 	}()
 
 	var done = make(chan bool)
 	<-done
 }
 
-func dialTunnel(tunnel *Tunnel) error {
+func tunnelSSHDial(tunnel *Tunnel) error {
 	userHomeDir, _ := os.UserHomeDir()
 	privateKeyPath := filepath.Join(userHomeDir, ".ssh", "id_rsa")
 	privateKeyBytes, err := os.ReadFile(privateKeyPath)
@@ -83,23 +95,54 @@ func dialTunnel(tunnel *Tunnel) error {
 		log.Printf("Dial tcp to ssh host error: config=%v, err=%v", json_utils.ToJsonStr(tunnel), err)
 		return err
 	}
-	listener, err := sshClient.Listen("tcp", ":"+strconv.Itoa(tunnel.ListenPort))
-	if err != nil {
-		_ = sshClient.Close()
-		log.Printf("Listen tcp error: config=%v, err=%v", json_utils.ToJsonStr(tunnel), err)
-		return err
-	}
-	log.Printf("Listening tcp: %v", json_utils.ToJsonStr(tunnel))
-
+	log.Printf("Dial tcp to ssh host: config=%v", json_utils.ToJsonStr(tunnel))
 	tunnel.sshClient = sshClient
-	tunnel.listener = &listener
 	return nil
 }
 
 //goland:noinspection GoUnhandledErrorResult
-func acceptTunnel(tunnel *Tunnel) {
-	listener := *tunnel.listener
+func tunnelAccept(tunnel *Tunnel) {
 	sshClient := tunnel.sshClient
+	listener, err := net.Listen("tcp", ":"+strconv.Itoa(tunnel.ListenPort))
+	if err != nil {
+		_ = sshClient.Close()
+		log.Printf("Listen tcp to local host error: config=%v, err=%v", json_utils.ToJsonStr(tunnel), err)
+		return
+	}
+	log.Printf("Listening tcp to local host: config=%v", json_utils.ToJsonStr(tunnel))
+	tunnel.listener = &listener
+	defer listener.Close()
+	defer sshClient.Close()
+
+	for {
+		if tunnel.Status == 0 {
+			return
+		}
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Printf("Accept user connection error: config=%v, err=%v", json_utils.ToJsonStr(tunnel), err)
+			return
+		}
+		targetConn, err := sshClient.Dial("tcp", tunnel.TargetIp+":"+strconv.Itoa(tunnel.TargetPort))
+		if err != nil {
+			log.Printf("Dial tcp to target host error: config=%v, err=%v", json_utils.ToJsonStr(tunnel), err)
+			return
+		}
+		go tunnelConnectionRelay(tunnel, &targetConn, &conn)
+	}
+}
+
+//goland:noinspection GoUnhandledErrorResult
+func reverseTunnelAccept(tunnel *Tunnel) {
+	sshClient := tunnel.sshClient
+	listener, err := sshClient.Listen("tcp", ":"+strconv.Itoa(tunnel.ListenPort))
+	if err != nil {
+		_ = sshClient.Close()
+		log.Printf("Listen tcp to ssh host error: config=%v, err=%v", json_utils.ToJsonStr(tunnel), err)
+		return
+	}
+	log.Printf("Listening tcp to ssh host: config=%v", json_utils.ToJsonStr(tunnel))
+	tunnel.listener = &listener
 	defer listener.Close()
 	defer sshClient.Close()
 
@@ -117,12 +160,12 @@ func acceptTunnel(tunnel *Tunnel) {
 			log.Printf("Dial tcp to target host error: config=%v, err=%v", json_utils.ToJsonStr(tunnel), err)
 			return
 		}
-		go relayConnection(tunnel, &targetConn, &conn)
+		go tunnelConnectionRelay(tunnel, &targetConn, &conn)
 	}
 }
 
 //goland:noinspection GoUnhandledErrorResult
-func relayConnection(tunnel *Tunnel, targetConn *net.Conn, conn *net.Conn) {
+func tunnelConnectionRelay(tunnel *Tunnel, targetConn *net.Conn, conn *net.Conn) {
 	defer (*conn).Close()
 	defer (*targetConn).Close()
 
@@ -147,7 +190,7 @@ func relayConnection(tunnel *Tunnel, targetConn *net.Conn, conn *net.Conn) {
 	wg.Wait()
 }
 
-func keepaliveTunnel(todoTunnels *chan *Tunnel, doingTunnels *chan *Tunnel) {
+func tunnelKeepalive(todoTunnels *chan *Tunnel, doingTunnels *chan *Tunnel) {
 	for {
 		checkTunnel := <-*doingTunnels
 		go func() {
