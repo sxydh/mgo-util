@@ -8,12 +8,12 @@ import (
 	"time"
 )
 
-type Server struct {
+type TcpServer struct {
 	onConn    func(conn *net.Conn)
 	onMessage func(msg string)
 }
 
-func (server *Server) TcpServer() int {
+func (server *TcpServer) TcpServerOnRand() int {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for {
 		port := 40000 + r.Intn(10000)
@@ -25,7 +25,7 @@ func (server *Server) TcpServer() int {
 }
 
 //goland:noinspection GoUnhandledErrorResult
-func (server *Server) TcpServerOnPort(port int) error {
+func (server *TcpServer) TcpServerOnPort(port int) error {
 	listener, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
 		log.Printf("Listen on port error, port=%v, err=%v", port, err)
