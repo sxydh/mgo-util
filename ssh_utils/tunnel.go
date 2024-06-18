@@ -14,7 +14,6 @@ import (
 )
 
 type Tunnel struct {
-	Id         string `json:"id"`
 	SSHIp      string `json:"sshIp"`
 	SSHPort    int    `json:"sshPort"`
 	SSHUser    string `json:"sshUser"`
