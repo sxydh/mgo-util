@@ -112,32 +112,32 @@ func acceptTunnel(tunnel *Tunnel) {
 			log.Printf("Accept user connection error: config=%v, err=%v", json_utils.ToJsonStr(tunnel), err)
 			return
 		}
-		go relayConnection(tunnel, &conn)
+		targetConn, err := net.Dial("tcp", tunnel.TargetIp+":"+strconv.Itoa(tunnel.TargetPort))
+		if err != nil {
+			log.Printf("Dial tcp to target host error: config=%v, err=%v", json_utils.ToJsonStr(tunnel), err)
+			return
+		}
+		go relayConnection(tunnel, &targetConn, &conn)
 	}
 }
 
 //goland:noinspection GoUnhandledErrorResult
-func relayConnection(tunnel *Tunnel, conn *net.Conn) {
-	targetConn, err := net.Dial("tcp", tunnel.TargetIp+":"+strconv.Itoa(tunnel.TargetPort))
-	if err != nil {
-		log.Printf("Dial tcp to target host error: config=%v, err=%v", json_utils.ToJsonStr(tunnel), err)
-		return
-	}
+func relayConnection(tunnel *Tunnel, targetConn *net.Conn, conn *net.Conn) {
 	defer (*conn).Close()
-	defer targetConn.Close()
+	defer (*targetConn).Close()
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
 	go func() {
-		_, err := io.Copy(targetConn, *conn)
+		_, err := io.Copy(*targetConn, *conn)
 		if err != nil {
 			log.Printf("Copy user to target error: config=%v, err=%v", json_utils.ToJsonStr(tunnel), err)
 		}
 		wg.Done()
 	}()
 	go func() {
-		_, err := io.Copy(*conn, targetConn)
+		_, err := io.Copy(*conn, *targetConn)
 		if err != nil {
 			log.Printf("Copy target to user error: config=%v, err=%v", json_utils.ToJsonStr(tunnel), err)
 		}
