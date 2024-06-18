@@ -1,0 +1,2 @@
+环境
+    推送到 GitHub 后，发布 Release 才会生效。
