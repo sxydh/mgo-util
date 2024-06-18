@@ -120,7 +120,7 @@ func tunnelAccept(tunnel *Tunnel) {
 		conn, err := listener.Accept()
 		if err != nil {
 			log.Printf("Accept user connection error: config=%v, err=%v", json_utils.ToJsonStr(tunnel), err)
-			return
+			continue
 		}
 		targetConn, err := sshClient.Dial("tcp", tunnel.TargetIp+":"+strconv.Itoa(tunnel.TargetPort))
 		if err != nil {
