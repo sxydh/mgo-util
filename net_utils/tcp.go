@@ -56,7 +56,7 @@ func (server *TcpServer) TcpServerOnPort(port int) error {
 					log.Printf("Read body length error, localAddr=%v， remoteAddr=%v", conn.LocalAddr(), conn.RemoteAddr())
 					return
 				}
-				bytes = make([]byte, binary.BigEndian.Uint64(bytes))
+				bytes = make([]byte, binary.BigEndian.Uint32(bytes))
 				_, err = io.ReadFull(reader, bytes)
 				if err != nil {
 					log.Printf("Read body error, localAddr=%v， remoteAddr=%v", conn.LocalAddr(), conn.RemoteAddr())
