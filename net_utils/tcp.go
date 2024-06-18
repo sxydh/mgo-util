@@ -44,7 +44,7 @@ func (server *TcpServer) TcpServerOnPort(port int) error {
 			return err
 		}
 		server.OnConn(&conn)
-		log.Printf("Accepting connection: localAddr=%v， remoteAddr=%v", conn.LocalAddr(), conn.RemoteAddr())
+		log.Printf("Accepting connection: localAddr=%v, remoteAddr=%v", conn.LocalAddr(), conn.RemoteAddr())
 
 		go func() {
 			defer conn.Close()
@@ -53,13 +53,13 @@ func (server *TcpServer) TcpServerOnPort(port int) error {
 				bytes := make([]byte, 4)
 				_, err = io.ReadFull(reader, bytes)
 				if err != nil {
-					log.Printf("Read body length error, localAddr=%v， remoteAddr=%v", conn.LocalAddr(), conn.RemoteAddr())
+					log.Printf("Read body length error, localAddr=%v, remoteAddr=%v, err=%v", conn.LocalAddr(), conn.RemoteAddr(), err)
 					return
 				}
 				bytes = make([]byte, binary.BigEndian.Uint32(bytes))
 				_, err = io.ReadFull(reader, bytes)
 				if err != nil {
-					log.Printf("Read body error, localAddr=%v， remoteAddr=%v", conn.LocalAddr(), conn.RemoteAddr())
+					log.Printf("Read body error, localAddr=%v, remoteAddr=%v, err=%v", conn.LocalAddr(), conn.RemoteAddr(), err)
 					return
 				}
 				server.OnMessage(string(bytes))
