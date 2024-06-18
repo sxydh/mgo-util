@@ -45,13 +45,15 @@ func (server *TcpServer) TcpServerOnPort(port int) error {
 
 		go func() {
 			defer conn.Close()
-			bytes := make([]byte, 1024)
-			_, err = conn.Read(bytes)
-			if err != nil {
-				log.Printf("Read error, localAddr=%v， remoteAddr=%v", conn.LocalAddr(), conn.RemoteAddr())
-				return
+			for {
+				bytes := make([]byte, 1024)
+				_, err = conn.Read(bytes)
+				if err != nil {
+					log.Printf("Read error, localAddr=%v， remoteAddr=%v", conn.LocalAddr(), conn.RemoteAddr())
+					return
+				}
+				server.OnMessage(string(bytes))
 			}
-			server.OnMessage(string(bytes))
 		}()
 	}
 }
