@@ -125,7 +125,7 @@ func tunnelAccept(tunnel *Tunnel) {
 	defer sshClient.Close()
 
 	for {
-		if tunnel.Status == 0 {
+		if tunnel.Status != 1 {
 			return
 		}
 		conn, err := listener.Accept()
@@ -157,7 +157,7 @@ func reverseTunnelAccept(tunnel *Tunnel) {
 	defer sshClient.Close()
 
 	for {
-		if tunnel.Status == 0 {
+		if tunnel.Status != 1 {
 			return
 		}
 		conn, err := listener.Accept()
