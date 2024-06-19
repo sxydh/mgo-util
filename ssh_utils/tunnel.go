@@ -17,9 +17,9 @@ type Tunnel struct {
 	SSHIp      string `json:"sshIp"`
 	SSHPort    int    `json:"sshPort"`
 	SSHUser    string `json:"sshUser"`
-	sshClient  *ssh.Client
+	SshClient  *ssh.Client
 	ListenPort int `json:"listenPort"`
-	listener   *net.Listener
+	Listener   *net.Listener
 	TargetIp   string `json:"targetIp"`
 	TargetPort int    `json:"targetPort"`
 	Status     int    `json:"status"`
@@ -95,13 +95,13 @@ func tunnelSSHDial(tunnel *Tunnel) error {
 		return err
 	}
 	log.Printf("Dial tcp to ssh host: config=%v", json_utils.ToJsonStr(tunnel))
-	tunnel.sshClient = sshClient
+	tunnel.SshClient = sshClient
 	return nil
 }
 
 //goland:noinspection GoUnhandledErrorResult
 func tunnelAccept(tunnel *Tunnel) {
-	sshClient := tunnel.sshClient
+	sshClient := tunnel.SshClient
 	listener, err := net.Listen("tcp", "localhost:"+strconv.Itoa(tunnel.ListenPort))
 	if err != nil {
 		_ = sshClient.Close()
@@ -109,7 +109,7 @@ func tunnelAccept(tunnel *Tunnel) {
 		return
 	}
 	log.Printf("Listening tcp to local host: config=%v", json_utils.ToJsonStr(tunnel))
-	tunnel.listener = &listener
+	tunnel.Listener = &listener
 	defer listener.Close()
 	defer sshClient.Close()
 
@@ -133,7 +133,7 @@ func tunnelAccept(tunnel *Tunnel) {
 
 //goland:noinspection GoUnhandledErrorResult
 func reverseTunnelAccept(tunnel *Tunnel) {
-	sshClient := tunnel.sshClient
+	sshClient := tunnel.SshClient
 	listener, err := sshClient.Listen("tcp", "localhost:"+strconv.Itoa(tunnel.ListenPort))
 	if err != nil {
 		_ = sshClient.Close()
@@ -141,7 +141,7 @@ func reverseTunnelAccept(tunnel *Tunnel) {
 		return
 	}
 	log.Printf("Listening tcp to ssh host: config=%v", json_utils.ToJsonStr(tunnel))
-	tunnel.listener = &listener
+	tunnel.Listener = &listener
 	defer listener.Close()
 	defer sshClient.Close()
 
@@ -193,7 +193,7 @@ func tunnelKeepalive(doingTunnels *chan *Tunnel, todoTunnels *chan *Tunnel) {
 	for {
 		checkTunnel := <-*doingTunnels
 		go func() {
-			session, err := checkTunnel.sshClient.NewSession()
+			session, err := checkTunnel.SshClient.NewSession()
 			if err != nil {
 				log.Printf("NewSession error: tunnel=%v, err=%v", json_utils.ToJsonStr(checkTunnel), err)
 				checkTunnel.Status = 0
