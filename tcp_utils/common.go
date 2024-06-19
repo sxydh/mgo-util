@@ -29,7 +29,7 @@ func (server *TcpServer) RandPort() int {
 
 //goland:noinspection GoUnhandledErrorResult
 func (server *TcpServer) Port(port int) error {
-	listener, err := net.Listen("tcp", ":"+strconv.Itoa(port))
+	listener, err := net.Listen("tcp", "127.0.0.1:"+strconv.Itoa(port))
 	if err != nil {
 		log.Printf("Listen on port for tcp error: port=%v, err=%v", port, err)
 		return err
