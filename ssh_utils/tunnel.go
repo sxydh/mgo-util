@@ -38,8 +38,16 @@ func StopTunnel(tunnels *[]*Tunnel) {
 	for _, tunnel := range *tunnels {
 		tunnel.Status = -1
 		tunnel.Delete = 1
-		_ = tunnel.SshClient.Close()
-		_ = (*tunnel.Listener).Close()
+		err := (*tunnel.Listener).Close()
+		if err != nil {
+			log.Printf("Close listener error: config=%v, err=%v", json_utils.ToJsonStr(*tunnel), err)
+		}
+		log.Printf("Close listener: config=%v", json_utils.ToJsonStr(*tunnel))
+		err = tunnel.SshClient.Close()
+		if err != nil {
+			log.Printf("Close ssh client error: config=%v, err=%v", json_utils.ToJsonStr(*tunnel), err)
+		}
+		log.Printf("Close ssh client: config=%v", json_utils.ToJsonStr(*tunnel))
 	}
 }
 
