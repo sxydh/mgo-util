@@ -33,6 +33,12 @@ func NewReverseTunnel(tunnels *[]*Tunnel) {
 	tunnelBuild(tunnels, -1)
 }
 
+func StopTunnel(tunnels *[]*Tunnel) {
+	for _, tunnel := range *tunnels {
+		tunnel.Status = -1
+	}
+}
+
 func tunnelBuild(tunnels *[]*Tunnel, direction int) {
 	var todoTunnels = make(chan *Tunnel, 20)
 	var doingTunnels = make(chan *Tunnel, 20)
@@ -43,6 +49,9 @@ func tunnelBuild(tunnels *[]*Tunnel, direction int) {
 	go func() {
 		for {
 			todoTunnel := <-todoTunnels
+			if todoTunnel.Status == -1 {
+				continue
+			}
 			err := tunnelSSHDial(todoTunnel)
 			if err != nil {
 				todoTunnels <- todoTunnel
@@ -192,6 +201,9 @@ func tunnelConnectionRelay(tunnel *Tunnel, targetConn *net.Conn, conn *net.Conn)
 func tunnelKeepalive(doingTunnels *chan *Tunnel, todoTunnels *chan *Tunnel) {
 	for {
 		checkTunnel := <-*doingTunnels
+		if checkTunnel.Status == -1 {
+			continue
+		}
 		go func() {
 			session, err := checkTunnel.SshClient.NewSession()
 			if err != nil {
