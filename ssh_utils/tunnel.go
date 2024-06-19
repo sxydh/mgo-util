@@ -36,6 +36,8 @@ func NewReverseTunnel(tunnels *[]*Tunnel) {
 func StopTunnel(tunnels *[]*Tunnel) {
 	for _, tunnel := range *tunnels {
 		tunnel.Status = -1
+		_ = tunnel.SshClient.Close()
+		_ = (*tunnel.Listener).Close()
 	}
 }
 
