@@ -23,6 +23,7 @@ type Tunnel struct {
 	TargetIp   string `json:"targetIp"`
 	TargetPort int    `json:"targetPort"`
 	Status     int    `json:"status"`
+	Delete     int    `json:"delete"`
 }
 
 func NewTunnel(tunnels *[]*Tunnel) {
@@ -36,6 +37,7 @@ func NewReverseTunnel(tunnels *[]*Tunnel) {
 func StopTunnel(tunnels *[]*Tunnel) {
 	for _, tunnel := range *tunnels {
 		tunnel.Status = -1
+		tunnel.Delete = 1
 		_ = tunnel.SshClient.Close()
 		_ = (*tunnel.Listener).Close()
 	}
@@ -51,7 +53,7 @@ func tunnelBuild(tunnels *[]*Tunnel, direction int) {
 	go func() {
 		for {
 			todoTunnel := <-todoTunnels
-			if todoTunnel.Status == -1 {
+			if todoTunnel.Delete == 1 {
 				continue
 			}
 			err := tunnelSSHDial(todoTunnel)
@@ -203,7 +205,7 @@ func tunnelConnectionRelay(tunnel *Tunnel, targetConn *net.Conn, conn *net.Conn)
 func tunnelKeepalive(doingTunnels *chan *Tunnel, todoTunnels *chan *Tunnel) {
 	for {
 		checkTunnel := <-*doingTunnels
-		if checkTunnel.Status == -1 {
+		if checkTunnel.Delete == 1 {
 			continue
 		}
 		go func() {
