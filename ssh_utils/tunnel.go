@@ -24,6 +24,7 @@ type Tunnel struct {
 	TargetPort int    `json:"targetPort"`
 	Status     int    `json:"status"`
 	Delete     int    `json:"delete"`
+	LastAlive  string `json:"lastAlive"`
 }
 
 func NewTunnel(tunnels *[]*Tunnel) {
@@ -237,6 +238,7 @@ func tunnelKeepalive(doingTunnels *chan *Tunnel, todoTunnels *chan *Tunnel) {
 				*todoTunnels <- checkTunnel
 				return
 			}
+			checkTunnel.LastAlive = time.Now().Format("2006-01-02 15:04:05.000")
 			*doingTunnels <- checkTunnel
 		}()
 		time.Sleep(5 * time.Second)
