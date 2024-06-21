@@ -43,17 +43,17 @@ func StopTunnel(tunnels *[]*Tunnel) {
 		if tunnel.Listener != nil {
 			err := (*tunnel.Listener).Close()
 			if err != nil {
-				log.Printf("Close listener error: config=%v, err=%v", json_utils.ToJsonStr(*tunnel), err)
+				log.Printf("Close listener error: config=%v, err=%v", json_utils.ToJsonStr(tunnel), err)
 			} else {
-				log.Printf("Close listener: config=%v", json_utils.ToJsonStr(*tunnel))
+				log.Printf("Close listener: config=%v", json_utils.ToJsonStr(tunnel))
 			}
 		}
 		if tunnel.SshClient != nil {
 			err := tunnel.SshClient.Close()
 			if err != nil {
-				log.Printf("Close ssh client error: config=%v, err=%v", json_utils.ToJsonStr(*tunnel), err)
+				log.Printf("Close ssh client error: config=%v, err=%v", json_utils.ToJsonStr(tunnel), err)
 			} else {
-				log.Printf("Close ssh client: config=%v", json_utils.ToJsonStr(*tunnel))
+				log.Printf("Close ssh client: config=%v", json_utils.ToJsonStr(tunnel))
 			}
 		}
 	}
