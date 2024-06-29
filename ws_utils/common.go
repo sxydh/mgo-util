@@ -11,6 +11,7 @@ import (
 )
 
 type WsServer struct {
+	OnConn    func(conn *websocket.Conn)
 	OnMessage func(msg string)
 }
 
@@ -41,7 +42,6 @@ func (server *WsServer) Port(port int) {
 
 //goland:noinspection GoUnhandledErrorResult
 func (server *WsServer) wsHandler(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Get user connection: remoteAddr=%v", r.RemoteAddr)
 	var upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true
@@ -53,6 +53,8 @@ func (server *WsServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer wsConn.Close()
+	log.Printf("Get user connection: remoteAddr=%v", r.RemoteAddr)
+	server.OnConn(wsConn)
 	for {
 		_, p, err := wsConn.ReadMessage()
 		if err != nil {
