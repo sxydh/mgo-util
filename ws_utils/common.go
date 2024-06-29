@@ -64,3 +64,7 @@ func (server *WsServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 		server.OnMessage(string(p))
 	}
 }
+
+func (server *WsServer) Send(conn *websocket.Conn, msg string) error {
+	return conn.WriteMessage(websocket.TextMessage, []byte(msg))
+}
