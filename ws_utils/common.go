@@ -41,6 +41,7 @@ func (server *WsServer) Port(port int) {
 
 //goland:noinspection GoUnhandledErrorResult
 func (server *WsServer) wsHandler(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Get user connection: remoteAddr=%v", r.RemoteAddr)
 	var upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true
