@@ -15,7 +15,7 @@ type WsServer struct {
 	OnMessage func(msg string)
 }
 
-func (server *WsServer) RandPort() int {
+func (server *WsServer) RandPort(pattern string) int {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for {
 		port := 40000 + r.Intn(10000)
@@ -25,14 +25,14 @@ func (server *WsServer) RandPort() int {
 		}
 		_ = listener.Close()
 		go func() {
-			server.Port(port)
+			server.Port(pattern, port)
 		}()
 		return port
 	}
 }
 
-func (server *WsServer) Port(port int) {
-	http.HandleFunc("/", server.wsHandler)
+func (server *WsServer) Port(pattern string, port int) {
+	http.HandleFunc(pattern, server.wsHandler)
 	log.Printf("ListenAndServe going: port=%v", port)
 	err := http.ListenAndServe(":"+strconv.Itoa(port), nil)
 	if err != nil {
