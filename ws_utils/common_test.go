@@ -23,7 +23,7 @@ func TestWsServer_RandPort(t *testing.T) {
 					log.Printf("OnMessage: msg=%v", msg)
 				},
 			}
-			got := server.RandPort()
+			got := server.RandPort("/")
 			log.Printf("RandPort: got=%v", got)
 			select {}
 		})
