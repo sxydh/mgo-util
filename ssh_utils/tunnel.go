@@ -72,6 +72,12 @@ func tunnelBuild(tunnels *[]*Tunnel, direction int) {
 			if todoTunnel.Delete == 1 {
 				continue
 			}
+			if todoTunnel.SshClient != nil {
+				_ = todoTunnel.SshClient.Close()
+			}
+			if todoTunnel.Listener != nil {
+				_ = (*todoTunnel.Listener).Close()
+			}
 			err := tunnelSSHDial(todoTunnel)
 			if err != nil {
 				todoTunnels <- todoTunnel
