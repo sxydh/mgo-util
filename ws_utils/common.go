@@ -7,10 +7,12 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 )
 
 type WsServer struct {
+	mutex     sync.Mutex
 	OnConn    func(conn *websocket.Conn)
 	OnMessage func(msg string)
 }
@@ -66,5 +68,7 @@ func (server *WsServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *WsServer) Send(conn *websocket.Conn, msg string) error {
+	server.mutex.Lock()
+	defer server.mutex.Unlock()
 	return conn.WriteMessage(websocket.TextMessage, []byte(msg))
 }
